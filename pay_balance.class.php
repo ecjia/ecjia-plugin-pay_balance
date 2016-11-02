@@ -24,7 +24,7 @@ class pay_balance extends payment_abstract
         $user_id = $_SESSION['user_id'];
         
         /* 获取会员信息*/
-        $user_info = user_info($user_id);
+        $user_info = RC_Api::api('user', 'user_info', array('user_id' => $user_id));
         
         $result = RC_Api::api('orders', 'user_account_paid', array('user_id' => $user_id, 'order_id' => $this->order_info['order_id']));
         
