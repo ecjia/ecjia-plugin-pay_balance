@@ -109,6 +109,12 @@ class pay_balance extends PaymentAbstract
 			return $error_predata;
 			
 		} else {
+		    /* 更新支付流水记录*/
+		    RC_Api::api('payment', 'update_payment_record', [
+    		    'order_sn' 		=> $this->order_info['order_sn'],
+    		    'trade_no'      => ''
+		    ]);
+		    
 			/* 支付成功返回信息*/
 			$predata = array(
 	            'order_id'      => $this->order_info['order_id'],
