@@ -131,6 +131,24 @@ class pay_balance extends PaymentAbstract
         
     }
     
+    /**
+     * 支付服务器异步回调通知地址
+     * @see \Ecjia\App\Payment\PaymentAbstract::notifyUrl()
+     */
+    public function notifyUrl()
+    {
+        return ;
+    }
+    
+    /**
+     * 支付服务器同步回调响应地址
+     * @see \Ecjia\App\Payment\PaymentAbstract::callbackUrl()
+     */
+    public function callbackUrl()
+    {
+        return ;
+    }
+    
     public function notify() { 
     	 return ;
     }
