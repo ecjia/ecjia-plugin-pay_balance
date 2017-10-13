@@ -95,7 +95,7 @@ class pay_balance extends PaymentAbstract
         $result = RC_Api::api('orders', 'user_account_paid', array('user_id' => $user_id, 'order_id' => $this->order_info['order_id']));
         
         if ($this->order_info['order_type'] == Ecjia\App\Payment\PayConstant::PAY_QUICKYPAY) {
-        	$result = RC_Api::api('orders', 'quickpay_user_account_paid', array('user_id' => $user_id, 'order_id' => $this->order_info['order_id']));
+        	$result = RC_Api::api('quickpay', 'quickpay_user_account_paid', array('user_id' => $user_id, 'order_id' => $this->order_info['order_id']));
         } else {
         	$result = RC_Api::api('orders', 'user_account_paid', array('user_id' => $user_id, 'order_id' => $this->order_info['order_id']));
         }
