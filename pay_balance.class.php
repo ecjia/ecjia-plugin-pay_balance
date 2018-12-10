@@ -50,8 +50,9 @@
 defined('IN_ECJIA') or exit('No permission resources.');
 
 use Ecjia\App\Payment\PaymentAbstract;
+use Ecjia\App\Payment\Contracts\PayPayment;
 
-class pay_balance extends PaymentAbstract
+class pay_balance extends PaymentAbstract implements PayPayment
 {
 
     /**
@@ -159,6 +160,18 @@ class pay_balance extends PaymentAbstract
     
     public function response() {	 
     	 return ;
+    }
+
+
+    /**
+     * 插件支付
+     *
+     * @param $order_trade_no
+     */
+    public function pay($order_trade_no)
+    {
+
+
     }
     
 }
