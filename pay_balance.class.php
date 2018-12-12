@@ -87,30 +87,24 @@ class pay_balance extends PaymentAbstract implements PayPayment
         return $this->loadPluginData(RC_Plugin::plugin_dir_path(__FILE__) . '/languages/'.$locale.'/plugin.lang.php', $key, $default);
     }
     
-    public function get_prepare_data() {
-      
-    	$predata = $this->ProcessPrepareData();
-        
-    	return $predata;
-        
+    public function get_prepare_data()
+    {
+
+        $user_id = $_SESSION['user_id'];
+        /* 获取会员信息*/
+        $user_info = RC_Api::api('user', 'user_info', array('user_id' => $user_id));
+
+        $api_version = royalcms('request')->header('api-version');
+        if (version_compare($api_version, '1.25', '<')) {
+            $predata = $this->beforVersionPredata($user_info);
+        } else {
+            $predata = $this->nowVersionPredata($user_info);
+        }
+
+        return $predata;
     }
     
-    public function ProcessPrepareData() {
-    	$user_id = $_SESSION['user_id'];
-    	/* 获取会员信息*/
-    	$user_info = RC_Api::api('user', 'user_info', array('user_id' => $user_id));
-    	
-    	$api_version = royalcms('request')->header('api-version');
-    	if (version_compare($api_version, '1.25', '<')) {
-    		$predata = $this->beforVersionPredata($user_info);
-    	} else {
-    		$predata = $this->nowVersionPredata($user_info);
-    	}
-    	
-    	return $predata;
-    }
-    
-    public function beforVersionPredata($user_info)
+    private function beforVersionPredata($user_info)
     {
     	if ($this->order_info['order_type'] == Ecjia\App\Payment\PayConstant::PAY_QUICKYPAY) {
     		$result = RC_Api::api('quickpay', 'quickpay_user_account_paid', array('user_id' => $user_info['user_id'], 'order_id' => $this->order_info['order_id']));
@@ -152,8 +146,8 @@ class pay_balance extends PaymentAbstract implements PayPayment
     		return $predata;
     	}
     }
-    
-    public function nowVersionPredata($user_info)
+
+    private function nowVersionPredata($user_info)
     {
     	$paymentRecordInfo = RC_DB::table('payment_record')->where('order_sn', $this->order_info['order_sn'])->first();
     	//返回数据
