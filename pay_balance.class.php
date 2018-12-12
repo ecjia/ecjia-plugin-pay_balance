@@ -88,17 +88,35 @@ class pay_balance extends PaymentAbstract implements PayPayment
     }
     
     public function get_prepare_data() {
-        $user_id = $_SESSION['user_id'];
+      
+    	$predata = $this->ProcessPrepareData();
         
-        /* 获取会员信息*/
-        $user_info = RC_Api::api('user', 'user_info', array('user_id' => $user_id));
+    	return $predata;
         
-        if ($this->order_info['order_type'] == Ecjia\App\Payment\PayConstant::PAY_QUICKYPAY) {
-        	$result = RC_Api::api('quickpay', 'quickpay_user_account_paid', array('user_id' => $user_id, 'order_id' => $this->order_info['order_id']));
-        } else {
-        	$result = RC_Api::api('orders', 'user_account_paid', array('user_id' => $user_id, 'order_id' => $this->order_info['order_id']));
-        }
-        
+    }
+    
+    public function ProcessPrepareData() {
+    	$user_id = $_SESSION['user_id'];
+    	/* 获取会员信息*/
+    	$user_info = RC_Api::api('user', 'user_info', array('user_id' => $user_id));
+    	
+    	$api_version = royalcms('request')->header('api-version');
+    	if (version_compare($api_version, '1.25', '<')) {
+    		$predata = $this->beforVersionPredata($user_info);
+    	} else {
+    		$predata = $this->nowVersionPredata($user_info);
+    	}
+    	
+    	return $predata;
+    }
+    
+    public function beforVersionPredata($user_info)
+    {
+    	if ($this->order_info['order_type'] == Ecjia\App\Payment\PayConstant::PAY_QUICKYPAY) {
+    		$result = RC_Api::api('quickpay', 'quickpay_user_account_paid', array('user_id' => $user_info['user_id'], 'order_id' => $this->order_info['order_id']));
+    	} else {
+    		$result = RC_Api::api('orders', 'user_account_paid', array('user_id' => $user_info['user_id'], 'order_id' => $this->order_info['order_id']));
+    	}
     	if (is_ecjia_error($result)) {
     		/* 支付失败返回信息*/
     		$error_predata = array(
@@ -111,29 +129,47 @@ class pay_balance extends PaymentAbstract implements PayPayment
     				'pay_online'    => '',
     		);
     		$error_predata['error_message'] = $result->get_error_message();
-			return $error_predata;
-			
-		} else {
-		    /* 更新支付流水记录*/
-		    RC_Api::api('payment', 'update_payment_record', [
-    		    'order_sn' 		=> $this->order_info['order_sn'],
-    		    'trade_no'      => ''
-		    ]);
-		    
-			/* 支付成功返回信息*/
-			$predata = array(
-	            'order_id'      => $this->order_info['order_id'],
-	            'order_surplus' => price_format($this->order_info['order_amount'], false),
-	            'order_amount'  => price_format(0, false),
-	            'user_money'    => price_format($user_info['user_money'] - $this->order_info['order_amount'], false),
-	            'pay_code'      => $this->getCode(),
-	            'pay_name'      => $this->getDisplayName(),
-	            'pay_status'    => 'success',
-	            'pay_online'    => '',
-	        );
-			return $predata;
-		}
-        
+    		return $error_predata;
+    	
+    	} else {
+    		/* 更新支付流水记录*/
+    		RC_Api::api('payment', 'update_payment_record', [
+    		'order_sn' 		=> $this->order_info['order_sn'],
+    		'trade_no'      => ''
+    				]);
+    	
+    		/* 支付成功返回信息*/
+    		$predata = array(
+    				'order_id'      => $this->order_info['order_id'],
+    				'order_surplus' => price_format($this->order_info['order_amount'], false),
+    				'order_amount'  => price_format(0, false),
+    				'user_money'    => price_format($user_info['user_money'] - $this->order_info['order_amount'], false),
+    				'pay_code'      => $this->getCode(),
+    				'pay_name'      => $this->getDisplayName(),
+    				'pay_status'    => 'success',
+    				'pay_online'    => '',
+    		);
+    		return $predata;
+    	}
+    }
+    
+    public function nowVersionPredata($user_info)
+    {
+    	$paymentRecordInfo = RC_DB::table('payment_record')->where('order_sn', $this->order_info['order_sn'])->first();
+    	//返回数据
+    	$predata = array(
+    			'order_id'      	=> $this->order_info['order_id'],
+    			'order_surplus'	 	=> price_format($this->order_info['order_amount'], false),
+    			'order_amount'  	=> price_format(0, false),
+    			'user_money'    	=> price_format($user_info['user_money'] - $this->order_info['order_amount'], false),
+    			'pay_code'      	=> $this->getCode(),
+    			'pay_name'      	=> $this->getDisplayName(),
+    			'pay_status'    	=> 'success',
+    			'pay_online'    	=> '',
+    			'payment_record_id'	=> $paymentRecordInfo['id']
+    	);
+    	
+    	return $predata;
     }
     
     /**
@@ -165,15 +201,73 @@ class pay_balance extends PaymentAbstract implements PayPayment
 
     /**
      * 插件支付
-     *
-     * @param $order_trade_no
+     * @param $paymentRecordId 交易记录id
+     * @param $order_trade_no  交易流水号
      */
-    public function pay($order_trade_no)
+    public function pay($order_trade_no, $paymentRecordId)
     {
-
-
+    	$record_model = $this->paymentRecord->find($paymentRecordId);
+    	
+    	if (empty($record_model)) {
+    		return new ecjia_error('payment_record_not_found', '此笔交易记录未找到');
+    	}
+    	
+    	$user_id = $_SESSION['user_id'];
+    	/* 获取会员信息*/
+    	$user_info = RC_Api::api('user', 'user_info', array('user_id' => $user_id));
+    	
+    	//订单信息
+    	if ($record_model->trade_type == Ecjia\App\Payment\PayConstant::PAY_QUICKYPAY) {
+    		$order_info = RC_Api::api('quickpay', 'quickpay_order_info', array('order_sn' => $record_model->order_sn));
+    	} else {
+    		$orderinfo = RC_Api::api('orders', 'order_info', array('order_sn' => $record_model->order_sn));
+    	}
+    	
+    	if (empty($orderinfo)) {
+    		return new ecjia_error('order_dose_not_exist', $record_model->order_sn . '未找到该订单信息');
+    	}
+    	
+    	if ($record_model->trade_type == Ecjia\App\Payment\PayConstant::PAY_QUICKYPAY) {
+    		$result = RC_Api::api('quickpay', 'quickpay_user_account_paid', array('user_id' => $user_info['user_id'], 'order_id' => $orderinfo['order_id']));
+    	} else {
+    		$result = RC_Api::api('orders', 'user_account_paid', array('user_id' => $user_info['user_id'], 'order_id' => $orderinfo['order_id']));
+    	}
+    	
+    	//订单状态更新成功
+    	if (is_ecjia_error($result)) {
+    		/* 支付失败返回信息*/
+    		$error_predata = array(
+    				'order_id'      => $orderinfo['order_id'],
+    				'order_surplus' => price_format($orderinfo['surplus'], false),
+    				'order_amount'  => price_format($orderinfo['order_amount'], false),
+    				'pay_code'      => $this->getCode(),
+    				'pay_name'      => $this->getDisplayName(),
+    				'pay_status'    => 'error',
+    				'pay_online'    => '',
+    		);
+    		$error_predata['error_message'] = $result->get_error_message();
+    		return $error_predata;
+    		 
+    	} else {
+    		/* 更新支付流水记录*/
+    		RC_Api::api('payment', 'update_payment_record', [
+    		'order_sn' 		=> $orderinfo['order_sn'],
+    		'trade_no'      => ''
+    				]);
+    		/* 支付成功返回信息*/
+    		$predata = array(
+    				'order_id'      => $orderinfo['order_id'],
+    				'order_surplus' => price_format($orderinfo['order_amount'], false),
+    				'order_amount'  => price_format(0, false),
+    				'user_money'    => price_format($user_info['user_money'] - $orderinfo['order_amount'], false),
+    				'pay_code'      => $this->getCode(),
+    				'pay_name'      => $this->getDisplayName(),
+    				'pay_status'    => 'success',
+    				'pay_online'    => '',
+    		);
+    		return $predata;
+    	}
     }
-    
 }
 
 // end
