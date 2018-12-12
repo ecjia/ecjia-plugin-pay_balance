@@ -149,21 +149,20 @@ class pay_balance extends PaymentAbstract implements PayPayment
 
     private function nowVersionPredata($user_info)
     {
-    	$paymentRecordInfo = RC_DB::table('payment_record')->where('order_sn', $this->order_info['order_sn'])->first();
-    	//返回数据
-    	$predata = array(
-    			'order_id'      	=> $this->order_info['order_id'],
-    			'order_surplus'	 	=> price_format($this->order_info['order_amount'], false),
-    			'order_amount'  	=> price_format(0, false),
-    			'user_money'    	=> price_format($user_info['user_money'] - $this->order_info['order_amount'], false),
-    			'pay_code'      	=> $this->getCode(),
-    			'pay_name'      	=> $this->getDisplayName(),
-    			'pay_status'    	=> 'success',
-    			'pay_online'    	=> '',
-    			'payment_record_id'	=> $paymentRecordInfo['id']
-    	);
-    	
-    	return $predata;
+    	$recordId = $this->getPaymentRecordId();
+        $output = new Ecjia\App\Payment\PaymentOutput();
+        $output->setOrderSn($this->order_info['order_sn'])
+                ->setOrderId($this->order_info['order_id'])
+                ->setOrderAmount($this->order_info['order_amount'])
+                ->setPayCode($this->getCode())
+                ->setPayName($this->getDisplayName())
+                ->setPayRecordId($recordId)
+                ->setNotifyUrl($this->notifyUrl())
+                ->setCallbackUrl($this->callbackUrl())
+                ->setSubject(ecjia::config('shop_name') . '的订单：' . $this->order_info['order_sn'])
+                ->setOrderTradeNo($this->getOrderTradeNo($recordId));
+        
+        return $output->export();
     }
     
     /**
@@ -198,13 +197,12 @@ class pay_balance extends PaymentAbstract implements PayPayment
      * @param $paymentRecordId 交易记录id
      * @param $order_trade_no  交易流水号
      */
-    public function pay($order_trade_no, $paymentRecordId)
+    public function pay($order_trade_no)
     {
-    	$record_model = $this->paymentRecord->find($paymentRecordId);
-    	
-    	if (empty($record_model)) {
-    		return new ecjia_error('payment_record_not_found', '此笔交易记录未找到');
-    	}
+    	$record_model = $this->paymentRecord->getPaymentRecord($order_trade_no);
+        if (empty($record_model)) {
+            return new ecjia_error('payment_record_not_found', '此笔交易记录未找到');
+        }
     	
     	$user_id = $_SESSION['user_id'];
     	/* 获取会员信息*/
