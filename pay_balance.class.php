@@ -86,6 +86,14 @@ class pay_balance extends PaymentAbstract implements PayPayment
     
         return $this->loadPluginData(RC_Plugin::plugin_dir_path(__FILE__) . '/languages/'.$locale.'/plugin.lang.php', $key, $default);
     }
+
+    /**
+     * 统一下单方法
+     */
+    public function unifiedOrder()
+    {
+
+    }
     
     public function get_prepare_data()
     {
