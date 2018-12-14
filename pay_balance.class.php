@@ -165,8 +165,6 @@ class pay_balance extends PaymentAbstract implements PayPayment
                 ->setPayCode($this->getCode())
                 ->setPayName($this->getDisplayName())
                 ->setPayRecordId($recordId)
-                ->setNotifyUrl($this->notifyUrl())
-                ->setCallbackUrl($this->callbackUrl())
                 ->setSubject(ecjia::config('shop_name') . '的订单：' . $this->order_info['order_sn'])
                 ->setOrderTradeNo($this->getOrderTradeNo($recordId));
         
