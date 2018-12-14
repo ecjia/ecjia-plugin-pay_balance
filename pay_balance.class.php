@@ -174,33 +174,6 @@ class pay_balance extends PaymentAbstract implements PayPayment
     }
     
     /**
-     * 支付服务器异步回调通知地址
-     * @see \Ecjia\App\Payment\PaymentAbstract::notifyUrl()
-     */
-    public function notifyUrl()
-    {
-        return ;
-    }
-    
-    /**
-     * 支付服务器同步回调响应地址
-     * @see \Ecjia\App\Payment\PaymentAbstract::callbackUrl()
-     */
-    public function callbackUrl()
-    {
-        return ;
-    }
-    
-    public function notify() { 
-    	 return ;
-    }
-    
-    public function response() {	 
-    	 return ;
-    }
-
-
-    /**
      * 插件支付
      * @param $paymentRecordId 交易记录id
      * @param $order_trade_no  交易流水号
