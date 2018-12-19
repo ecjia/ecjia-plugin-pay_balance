@@ -103,7 +103,7 @@ class pay_balance extends PaymentAbstract implements PayPayment
         $user_info = RC_Api::api('user', 'user_info', array('user_id' => $user_id));
 
         $api_version = royalcms('request')->header('api-version');
-        if (version_compare($api_version, '1.25', '>')) {
+        if (version_compare($api_version, '1.25', '>=')) {
             $predata = $this->nowVersionPredata($user_info);
         } else {
             $predata = $this->beforVersionPredata($user_info);
