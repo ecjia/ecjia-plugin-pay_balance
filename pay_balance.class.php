@@ -189,7 +189,7 @@ class pay_balance extends PaymentAbstract implements PayPayment
     	
     	//订单信息
     	if ($record_model->trade_type == Ecjia\App\Payment\PayConstant::PAY_QUICKYPAY) {
-    		$order_info = RC_Api::api('quickpay', 'quickpay_order_info', array('order_sn' => $record_model->order_sn));
+    		$orderinfo = RC_Api::api('quickpay', 'quickpay_order_info', array('order_sn' => $record_model->order_sn));
     	} else {
     		$orderinfo = RC_Api::api('orders', 'order_info', array('order_sn' => $record_model->order_sn));
     	}
