@@ -55,6 +55,7 @@ use Ecjia\App\Payment\Contracts\PayPayment;
 class pay_balance extends PaymentAbstract implements PayPayment
 {
 
+	
     /**
      * 获取插件代号
      *
@@ -173,7 +174,6 @@ class pay_balance extends PaymentAbstract implements PayPayment
     
     /**
      * 插件支付
-     * @param $paymentRecordId 交易记录id
      * @param $order_trade_no  交易流水号
      */
     public function pay($order_trade_no)
@@ -182,10 +182,6 @@ class pay_balance extends PaymentAbstract implements PayPayment
         if (empty($record_model)) {
             return new ecjia_error('payment_record_not_found', '此笔交易记录未找到');
         }
-    	
-    	$user_id = $_SESSION['user_id'];
-    	/* 获取会员信息*/
-    	$user_info = RC_Api::api('user', 'user_info', array('user_id' => $user_id));
     	
     	//订单信息
     	if ($record_model->trade_type == Ecjia\App\Payment\PayConstant::PAY_QUICKYPAY) {
@@ -198,6 +194,13 @@ class pay_balance extends PaymentAbstract implements PayPayment
     		return new ecjia_error('order_dose_not_exist', $record_model->order_sn . '未找到该订单信息');
     	}
     	
+    	$user_id = $_SESSION['user_id'];
+    	if (empty($user_id)) {
+    		$user_id = $orderinfo['user_id'];
+    	}
+    	/* 获取会员信息*/
+    	$user_info = RC_Api::api('user', 'user_info', array('user_id' => $user_id));
+    	
     	if ($record_model->trade_type == Ecjia\App\Payment\PayConstant::PAY_QUICKYPAY) {
     		$result = RC_Api::api('quickpay', 'quickpay_user_account_paid', array('user_id' => $user_info['user_id'], 'order_id' => $orderinfo['order_id']));
     	} else {
@@ -209,8 +212,8 @@ class pay_balance extends PaymentAbstract implements PayPayment
     		/* 支付失败返回信息*/
     		$error_predata = array(
     				'order_id'      => $orderinfo['order_id'],
-    				'order_surplus' => price_format($orderinfo['surplus'], false),
-    				'order_amount'  => price_format($orderinfo['order_amount'], false),
+    				'order_surplus' => ecjia_price_format($orderinfo['surplus'], false),
+    				'order_amount'  => ecjia_price_format($orderinfo['order_amount'], false),
     				'pay_code'      => $this->getCode(),
     				'pay_name'      => $this->getDisplayName(),
     				'pay_status'    => 'error',
@@ -228,9 +231,9 @@ class pay_balance extends PaymentAbstract implements PayPayment
     		/* 支付成功返回信息*/
     		$predata = array(
     				'order_id'      => $orderinfo['order_id'],
-    				'order_surplus' => price_format($orderinfo['order_amount'], false),
-    				'order_amount'  => price_format(0, false),
-    				'user_money'    => price_format($user_info['user_money'] - $orderinfo['order_amount'], false),
+    				'order_surplus' => ecjia_price_format($orderinfo['order_amount'], false),
+    				'order_amount'  => ecjia_price_format(0, false),
+    				'user_money'    => ecjia_price_format($user_info['user_money'] - $orderinfo['order_amount'], false),
     				'pay_code'      => $this->getCode(),
     				'pay_name'      => $this->getDisplayName(),
     				'pay_status'    => 'success',
