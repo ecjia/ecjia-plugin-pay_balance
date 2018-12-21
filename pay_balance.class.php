@@ -93,24 +93,23 @@ class pay_balance extends PaymentAbstract implements PayPayment
      */
     public function unifiedOrder()
     {
-
-    }
-    
-    public function get_prepare_data()
-    {
-
         $user_id = $_SESSION['user_id'];
         /* 获取会员信息*/
         $user_info = RC_Api::api('user', 'user_info', array('user_id' => $user_id));
 
         $api_version = royalcms('request')->header('api-version');
-        if (version_compare($api_version, '1.25', '>=')) {
-            $predata = $this->nowVersionPredata($user_info);
-        } else {
+        if (version_compare($api_version, '1.25', '<')) {
             $predata = $this->beforVersionPredata($user_info);
+        } else {
+            $predata = $this->nowVersionPredata($user_info);
         }
 
         return $predata;
+    }
+    
+    public function get_prepare_data()
+    {
+        return $this->unifiedOrder();
     }
     
     private function beforVersionPredata($user_info)
