@@ -185,6 +185,8 @@ class pay_balance extends PaymentAbstract implements PayPayment
     	//订单信息
     	if ($record_model->trade_type == Ecjia\App\Payment\PayConstant::PAY_QUICKYPAY) {
     		$orderinfo = RC_Api::api('quickpay', 'quickpay_order_info', array('order_sn' => $record_model->order_sn));
+    	} else if ($record_model->trade_type == Ecjia\App\Payment\PayConstant::PAY_SEPARATE_ORDER) {
+    	    $orderinfo = RC_Api::api('orders', 'separate_order_info', array('order_sn' => $record_model->order_sn));
     	} else {
     		$orderinfo = RC_Api::api('orders', 'order_info', array('order_sn' => $record_model->order_sn));
     	}
@@ -202,6 +204,8 @@ class pay_balance extends PaymentAbstract implements PayPayment
     	
     	if ($record_model->trade_type == Ecjia\App\Payment\PayConstant::PAY_QUICKYPAY) {
     		$result = RC_Api::api('quickpay', 'quickpay_user_account_paid', array('user_id' => $user_info['user_id'], 'order_id' => $orderinfo['order_id']));
+    	} else if ($record_model->trade_type == Ecjia\App\Payment\PayConstant::PAY_SEPARATE_ORDER) {
+    	    $result = RC_Api::api('orders', 'separate_user_account_paid', array('user_id' => $user_info['user_id'], 'order_sn' => $orderinfo['order_sn']));
     	} else {
     		$result = RC_Api::api('orders', 'user_account_paid', array('user_id' => $user_info['user_id'], 'order_id' => $orderinfo['order_id']));
     	}
@@ -210,13 +214,14 @@ class pay_balance extends PaymentAbstract implements PayPayment
     	if (is_ecjia_error($result)) {
     		/* 支付失败返回信息*/
     		$error_predata = array(
-    				'order_id'      => $orderinfo['order_id'],
-    				'order_surplus' => ecjia_price_format($orderinfo['surplus'], false),
-    				'order_amount'  => ecjia_price_format($orderinfo['order_amount'], false),
-    				'pay_code'      => $this->getCode(),
-    				'pay_name'      => $this->getDisplayName(),
-    				'pay_status'    => 'error',
-    				'pay_online'    => '',
+				'order_id'      => $orderinfo['order_id'],
+    		    'order_sn'      => $orderinfo['order_sn'],
+				'order_surplus' => ecjia_price_format($orderinfo['surplus'], false),
+				'order_amount'  => ecjia_price_format($orderinfo['order_amount'], false),
+				'pay_code'      => $this->getCode(),
+				'pay_name'      => $this->getDisplayName(),
+				'pay_status'    => 'error',
+				'pay_online'    => '',
     		);
     		$error_predata['error_message'] = $result->get_error_message();
     		return $error_predata;
@@ -224,19 +229,20 @@ class pay_balance extends PaymentAbstract implements PayPayment
     	} else {
     		/* 更新支付流水记录*/
     		RC_Api::api('payment', 'update_payment_record', [
-    		'order_sn' 		=> $orderinfo['order_sn'],
-    		'trade_no'      => ''
-    				]);
+        		'order_sn' 		=> $orderinfo['order_sn'],
+        		'trade_no'      => ''
+				]);
     		/* 支付成功返回信息*/
     		$predata = array(
-    				'order_id'      => $orderinfo['order_id'],
-    				'order_surplus' => ecjia_price_format($orderinfo['order_amount'], false),
-    				'order_amount'  => ecjia_price_format(0, false),
-    				'user_money'    => ecjia_price_format($user_info['user_money'] - $orderinfo['order_amount'], false),
-    				'pay_code'      => $this->getCode(),
-    				'pay_name'      => $this->getDisplayName(),
-    				'pay_status'    => 'success',
-    				'pay_online'    => '',
+				'order_id'      => $orderinfo['order_id'],
+    		    'order_sn'      => $orderinfo['order_sn'],
+				'order_surplus' => ecjia_price_format($orderinfo['order_amount'], false),
+				'order_amount'  => ecjia_price_format(0, false),
+				'user_money'    => ecjia_price_format($user_info['user_money'] - $orderinfo['order_amount'], false),
+				'pay_code'      => $this->getCode(),
+				'pay_name'      => $this->getDisplayName(),
+				'pay_status'    => 'success',
+				'pay_online'    => '',
     		);
     		return $predata;
     	}
