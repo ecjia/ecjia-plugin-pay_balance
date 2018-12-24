@@ -219,7 +219,7 @@ class pay_balance extends PaymentAbstract implements PayPayment
     				'pay_online'    => '',
     		);
     		$error_predata['error_message'] = $result->get_error_message();
-    		return $error_predata;
+    		return new ecjia_error('user_surplus_error', $result->get_error_message());
     		 
     	} else {
     		/* 更新支付流水记录*/
