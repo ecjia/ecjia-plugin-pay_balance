@@ -107,11 +107,6 @@ class pay_balance extends PaymentAbstract implements PayPayment
         return $predata;
     }
     
-    public function get_prepare_data()
-    {
-        return $this->unifiedOrder();
-    }
-    
     private function beforVersionPredata($user_info)
     {
     	if ($this->order_info['order_type'] == Ecjia\App\Payment\PayConstant::PAY_QUICKYPAY) {
