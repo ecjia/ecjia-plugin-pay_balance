@@ -242,6 +242,68 @@ class pay_balance extends PaymentAbstract implements PayPayment
     		return $predata;
     	}
     }
+    
+    /**
+     * 确认退款
+     * @param string $order_trade_no 订单交易号
+     * @param float $refund_amount 退款金额
+     * @param string $operator 操作员
+     * @return ecjia_error | array
+     */
+    public function refund($order_trade_no, $refund_amount, $operator)
+    {
+    	$record_model = $this->paymentRecord->getPaymentRecord($order_trade_no);
+    	if (empty($record_model)) {
+    		return new ecjia_error('payment_record_not_found', '此笔交易记录未找到');
+    	}
+    	
+    	$refund_payrecord = \Ecjia\App\Refund\Models\RefundPayRecordModel::where('order_sn', $record_model->order_sn)->first();
+    	if (empty($refund_payrecord)) {
+    		return new ecjia_error('payment_record_not_found', '此笔退款申请未找到');
+    	}
+    	
+    	//退款申请单
+    	$refund_order = RC_Api::api('refund', 'refund_order_info', array('refund_id' => $refund_payrecord->refund_id));
+    	if (is_ecjia_error($refund_order)) {
+    		return $refund_order;
+    	}
+    	
+    	if (!empty($refund_order['user_id'])) {
+    		$integral_name = ecjia::config('integral_name');
+    		if (empty($integral_name)) {
+    			$integral_name = '积分';
+    		}
+    		//账户余额变动记录
+    		$options = array(
+    				'user_id'		=> $refund_order['user_id'],
+    				'user_money'	=> $refund_order['back_money_total'],
+    				'change_desc'	=> '由于订单'.$refund_order['order_sn'].'退款，退还下单使用的'.$integral_name.'，退款金额退回余额',
+    				'change_type'	=> ACT_SAVING,
+    				'from_type'		=> 'refund_back_integral',
+    				'from_value'	=> $refund_order['order_sn']
+    		);
+    		RC_Api::api('finance', 'account_balance_change', $options);
+    		
+    		/*账户积分变动记录*/
+    		$bak_integral = RC_Api::api('finance', 'refund_back_pay_points', array('refund_id' => $refund_order['refund_id']));
+    		if (is_ecjia_error($bak_integral)) {
+    			return $bak_integral;
+    		}
+    		
+    		//TODO打款表，退款申请单，订单状态，退款申请状态等的更新，退款短信及消息通知
+    		
+    		
+    		//处理成功返回
+    		$refund_result = array(
+    				'refund_status'	=> 'success',
+    				'desc'			=> '订单退款成功！'
+    		);
+    		return $refund_result;
+    	} else {
+    		return new ecjia_error('pay_balance_refund_fail', '退款失败!');
+    	}
+    }
+    
 }
 
 // end
