@@ -284,11 +284,11 @@ class pay_balance extends PaymentAbstract implements PayPayment
     		);
     		RC_Api::api('finance', 'account_balance_change', $options);
     		
-    		/*账户积分变动记录*/
-    		$bak_integral = RC_Api::api('finance', 'refund_back_pay_points', array('refund_id' => $refund_order['refund_id']));
-    		if (is_ecjia_error($bak_integral)) {
-    			return $bak_integral;
-    		}
+    		/*账户积分变动记录*/ //TODO 迁移至外面处理
+    		//$bak_integral = RC_Api::api('finance', 'refund_back_pay_points', array('refund_id' => $refund_order['refund_id']));
+    		//if (is_ecjia_error($bak_integral)) {
+    		//	return $bak_integral;
+    		//}
     		
     		//TODO打款表，退款申请单，订单状态，退款申请状态等的更新，退款短信及消息通知
     		
