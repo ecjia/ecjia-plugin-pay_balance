@@ -282,7 +282,8 @@ class pay_balance extends PaymentAbstract implements PayPayment
     				'from_type'		=> 'refund_back_integral',
     				'from_value'	=> $refund_order['order_sn']
     		);
-    		RC_Api::api('finance', 'account_balance_change', $options);
+    		//TODO 暂时不启用
+    		//RC_Api::api('finance', 'account_balance_change', $options);
     		
     		/*账户积分变动记录*/ //TODO 迁移至外面处理
     		//$bak_integral = RC_Api::api('finance', 'refund_back_pay_points', array('refund_id' => $refund_order['refund_id']));
