@@ -290,7 +290,7 @@ class pay_balance extends PaymentAbstract implements CancelPayment, RefundPaymen
     		//账户余额变动记录
     		$options = array(
     				'user_id'		=> $refund_order['user_id'],
-    				'user_money'	=> $refund_order['back_money_total'],
+    				'user_money'	=> $refund_payrecord['back_money_total'],
     				'change_desc'	=> '由于订单'.$refund_order['order_sn'].'退款，退还下单使用的'.$integral_name.'，退款金额退回余额',
     				'change_type'	=> ACT_SAVING,
     				'from_type'		=> 'refund_back_integral',
