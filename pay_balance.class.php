@@ -150,7 +150,7 @@ class pay_balance extends PaymentAbstract implements CancelPayment, RefundPaymen
                 ->setPayCode($this->getCode())
                 ->setPayName($this->getDisplayName())
                 ->setPayRecordId($recordId)
-                ->setSubject(sprintf(__("%s的订单：%s", 'pay_balance'), ecjia::config('shop_name'), $this->order_info['order_sn']) )
+                ->setSubject(sprintf(__('%s的订单：%s', 'pay_balance'), ecjia::config('shop_name'), $this->order_info['order_sn']))
                 ->setOrderTradeNo($this->getOrderTradeNo($recordId));
         
         return $output->export();
@@ -282,7 +282,7 @@ class pay_balance extends PaymentAbstract implements CancelPayment, RefundPaymen
     		$options = array(
     				'user_id'		=> $refund_order['user_id'],
     				'user_money'	=> $refund_payrecord['back_money_total'],
-    				'change_desc'	=> sprintf(__("由于订单%s退款，退还下单使用的%s，退款金额退回余额", 'pay_balance'), $refund_order['order_sn'], $integral_name),
+    				'change_desc'	=> sprintf(__('由于订单%s退款，退还下单使用的%s，退款金额退回余额', 'pay_balance'), $refund_order['order_sn'], $integral_name),
     				'change_type'	=> ACT_SAVING,
     		);
     		
